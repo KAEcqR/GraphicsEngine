@@ -1,0 +1,68 @@
+# =========================
+# Build directories
+# =========================
+cmake-build-*/
+build/
+out/
+
+# =========================
+# CMake
+# =========================
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# =========================
+# Ninja / Make
+# =========================
+*.ninja
+.ninja_log
+.ninja_deps
+Makefile
+
+# =========================
+# Compiled binaries
+# =========================
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.o
+*.obj
+*.out
+
+# =========================
+# CLion / JetBrains
+# =========================
+.idea/
+*.iml
+
+# =========================
+# Windows
+# =========================
+*.pdb
+*.ilk
+*.idb
+
+# =========================
+# VSCode (jeśli użyjesz)
+# =========================
+.vscode/
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# Temporary files
+# =========================
+*.tmp
+*.swp
+*.bak
