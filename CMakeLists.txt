@@ -40,6 +40,11 @@ foreach(SHADER_FILE ${SHADER_FILES})
     configure_file(${SHADER_FILE} ${BUILD_SHADERS_DIR}/${FILE_NAME} COPYONLY)
 endforeach()
 
+foreach(SHADER_FILE ${SHADER_FILES})
+    get_filename_component(FILE_NAME ${SHADER_FILE} NAME)
+    configure_file(${SHADER_FILE} ${BUILD_SHADERS_DIR}/${FILE_NAME} COPYONLY)
+endforeach()
+
 # Executable
 add_executable(GraphicsEngine Source/main.cpp)
 

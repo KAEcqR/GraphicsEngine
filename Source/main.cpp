@@ -15,16 +15,18 @@ private:
     VAO vao;
     VBO* vbo;
     int vertexCount;
+    float radius;
+    int res;
 public:
-    Circle(float radius, int res) {
-        std::vector<float> vertices;
-        vertices.push_back(0.0f);
-        vertices.push_back(0.0f);
+    Circle(float positionX, float positionY, float radius, int res) : radius(radius), res(res) {
+        vector<float> vertices;
+        vertices.push_back(positionX);
+        vertices.push_back(positionY);
 
         for (int i = 0; i <= res; ++i) {
             float angle = 2.0f * 3.14159265358f * (static_cast<float>(i) / res);
-            float x = cos(angle) * radius;
-            float y = sin(angle) * radius;
+            float x = positionX + cos(angle) * radius;
+            float y = positionY + sin(angle) * radius;
             vertices.push_back(x);
             vertices.push_back(y);
         }
@@ -38,8 +40,23 @@ public:
         vbo->Unbind();
     }
 
-    void Draw(Shader& shader) {
+    void Draw(float x, float y, Shader& shader) {
         shader.Activate();
+
+        vector<float> vertices;
+        vertices.push_back(x);
+        vertices.push_back(y);
+
+        for (int i = 0; i <= res; ++i) { // używamy pola res
+            float angle = 2.0f * 3.14159265358f * (static_cast<float>(i) / res);
+            float vx = x + cos(angle) * radius; // używamy pola radius
+            float vy = y + sin(angle) * radius;
+            vertices.push_back(vx);
+            vertices.push_back(vy);
+        }
+
+        vbo->Bind();
+        vbo->Update(vertices);
 
         vao.Bind();
         glDrawArrays(GL_TRIANGLE_FAN, 0, vertexCount);
@@ -58,7 +75,7 @@ int main()
     int screenWidth = 800;
     int screenHeight = 800;
 
-    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Circle", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Gravity Sim", NULL, NULL);
     if (!window)
     {
         cout << "Failed to create window\n";
@@ -72,21 +89,26 @@ int main()
     glViewport(0, 0, 800, 800);
 
     Shader shaderProgram("Shaders/default.vert", "Shaders/default.frag");
+    Shader planetShader("Shaders/default.vert", "Shaders/planet.frag");
 
     VAO VAO1;
     VAO1.Bind();
 
-    Circle circle(0.5f, 100);
+    vector<float> planetpos = {0.1f, 0.2f};
+
+    Circle circle(0.3f, 0.4f, 0.1f, 100);
+    Circle planet2(planetpos[0], planetpos[1], 0.1f, 100);
 
     while (!glfwWindowShouldClose(window))
     {
-        shaderProgram.Activate();
         VAO1.Bind();
 
-        glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        circle.Draw(shaderProgram);
+        circle.Draw(0.3f, 0.4f, planetShader);
+        planet2.Draw(planetpos[0], planetpos[1], shaderProgram);
+
+        planetpos[1] -= 0.01f;
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -96,5 +118,6 @@ int main()
 
     glfwDestroyWindow(window);
     glfwTerminate();
+
     return 0;
 }

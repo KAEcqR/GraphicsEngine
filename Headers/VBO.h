@@ -14,6 +14,7 @@ public:
     void Bind();
     void Unbind();
     void Delete();
+    void Update(const std::vector<float>& vertices);
 };
 
 #endif

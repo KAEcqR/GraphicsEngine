@@ -17,3 +17,7 @@ void VBO::Unbind() {
 void VBO::Delete() {
     glDeleteBuffers(1, &ID);
 }
+
+void VBO::Update(const std::vector<float>& vertices) {
+    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
+}
