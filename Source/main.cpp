@@ -10,28 +10,42 @@
 
 using namespace std;
 
-VAO DrawCircle(float centerX, float centerY, float radius, int res) {
-    vector<float> vertices;
-    vertices.push_back(centerX);
-    vertices.push_back(centerY);
+class Circle {
+private:
+    VAO vao;
+    VBO* vbo;
+    int vertexCount;
+public:
+    Circle(float radius, int res) {
+        std::vector<float> vertices;
+        vertices.push_back(0.0f);
+        vertices.push_back(0.0f);
 
-    for (int i = 0; i <= res; ++i) {
-        float angle = 2.0f * 3.14159265358f * (static_cast<float>(i) / res);
-        float x = centerX + cos(angle) * radius;
-        float y = centerY + sin(angle) * radius;
-        vertices.push_back(x);
-        vertices.push_back(y);
+        for (int i = 0; i <= res; ++i) {
+            float angle = 2.0f * 3.14159265358f * (static_cast<float>(i) / res);
+            float x = cos(angle) * radius;
+            float y = sin(angle) * radius;
+            vertices.push_back(x);
+            vertices.push_back(y);
+        }
+
+        vertexCount = vertices.size() / 2;
+
+        vbo = new VBO(vertices);
+        vao.Bind();
+        vao.LinkVBO(*vbo, 0);
+        vao.Unbind();
+        vbo->Unbind();
     }
 
-    VBO vbo(vertices); // tworzy bufor wierzchołków
-    VAO vao;           // tworzy VAO
-    vao.Bind();
-    vao.LinkVBO(vbo, 0);
-    vao.Unbind();
-    vbo.Unbind();
+    void Draw(Shader& shader) {
+        shader.Activate();
 
-    return vao;
-}
+        vao.Bind();
+        glDrawArrays(GL_TRIANGLE_FAN, 0, vertexCount);
+    }
+
+};
 
 int main()
 {
@@ -53,6 +67,7 @@ int main()
     }
 
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(1);
     gladLoadGL();
     glViewport(0, 0, 800, 800);
 
@@ -61,9 +76,8 @@ int main()
     VAO VAO1;
     VAO1.Bind();
 
-    VAO circleVAO = DrawCircle(0.0f, 0.0f, 0.5f, 100);
+    Circle circle(0.5f, 100);
 
-    // ===== Pętla renderująca =====
     while (!glfwWindowShouldClose(window))
     {
         shaderProgram.Activate();
@@ -72,16 +86,12 @@ int main()
         glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        circleVAO.Bind();
-
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 102);
-
+        circle.Draw(shaderProgram);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    circleVAO.Delete();
     shaderProgram.Delete();
 
     glfwDestroyWindow(window);
