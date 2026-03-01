@@ -10,23 +10,34 @@
 
 using namespace std;
 
-class Circle {
+const double G = 6.6743e-11; // m^3 kg^-1 s^-2
+const float c = 299792458.0;
+float initMass = float(pow(10, 22));
+float sizeRatio = 30000.0f;
+
+
+class Planet {
 private:
     VAO vao;
     VBO* vbo;
     int vertexCount;
-    float radius;
-    int res;
+
 public:
-    Circle(float positionX, float positionY, float radius, int res) : radius(radius), res(res) {
+    float radius;
+    int res = 100;
+    vector<float> velocity;
+    vector<float> position;
+    float mass;
+
+    Planet(vector<float> position, float radius, vector<float> velocity, float mass) : radius(radius), velocity(velocity), position(position), mass(mass) {
         vector<float> vertices;
-        vertices.push_back(positionX);
-        vertices.push_back(positionY);
+        vertices.push_back(position[0]);
+        vertices.push_back(position[1]);
 
         for (int i = 0; i <= res; ++i) {
             float angle = 2.0f * 3.14159265358f * (static_cast<float>(i) / res);
-            float x = positionX + cos(angle) * radius;
-            float y = positionY + sin(angle) * radius;
+            float x = position[0] + cos(angle) * radius;
+            float y = position[1] + sin(angle) * radius;
             vertices.push_back(x);
             vertices.push_back(y);
         }
@@ -40,17 +51,17 @@ public:
         vbo->Unbind();
     }
 
-    void Draw(float x, float y, Shader& shader) {
+    void Draw(Shader& shader) {
         shader.Activate();
 
         vector<float> vertices;
-        vertices.push_back(x);
-        vertices.push_back(y);
+        vertices.push_back(position[0]);
+        vertices.push_back(position[1]);
 
         for (int i = 0; i <= res; ++i) { // używamy pola res
             float angle = 2.0f * 3.14159265358f * (static_cast<float>(i) / res);
-            float vx = x + cos(angle) * radius; // używamy pola radius
-            float vy = y + sin(angle) * radius;
+            float vx = position[0] + cos(angle) * radius; // używamy pola radius
+            float vy = position[1] + sin(angle) * radius;
             vertices.push_back(vx);
             vertices.push_back(vy);
         }
@@ -62,11 +73,17 @@ public:
         glDrawArrays(GL_TRIANGLE_FAN, 0, vertexCount);
     }
 
+    void Accelerate(float x, float y) {
+        velocity[0] += x;
+        velocity[1] += y;
+
+        position[0] += velocity[0];
+        position[1] += velocity[1];
+    }
 };
 
 int main()
 {
-
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -91,24 +108,23 @@ int main()
     Shader shaderProgram("Shaders/default.vert", "Shaders/default.frag");
     Shader planetShader("Shaders/default.vert", "Shaders/planet.frag");
 
-    VAO VAO1;
-    VAO1.Bind();
+    Planet moon({-0.5f, 0.0f}, 0.1f, {0.0f, 0.0f}, 0.1f);
+    Planet earth({0.5f, 0.0f}, 0.1f, {0.0f, 0.0f}, 0.1f);
 
-    vector<float> planetpos = {0.1f, 0.2f};
+    double lastTime = glfwGetTime();
 
-    Circle circle(0.3f, 0.4f, 0.1f, 100);
-    Circle planet2(planetpos[0], planetpos[1], 0.1f, 100);
-
+    // render loop
     while (!glfwWindowShouldClose(window))
     {
-        VAO1.Bind();
-
+        double currentTime = glfwGetTime();
+        double dt = currentTime - lastTime;
+        lastTime = currentTime;
         glClear(GL_COLOR_BUFFER_BIT);
 
-        circle.Draw(0.3f, 0.4f, planetShader);
-        planet2.Draw(planetpos[0], planetpos[1], shaderProgram);
+        moon.Draw(shaderProgram);
+        earth.Draw(planetShader);
 
-        planetpos[1] -= 0.01f;
+        moon.Accelerate(-0.001f * dt, 0.0f);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
