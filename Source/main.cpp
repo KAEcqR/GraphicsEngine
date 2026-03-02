@@ -14,7 +14,12 @@ const double G = 6.6743e-11; // m^3 kg^-1 s^-2
 const float c = 299792458.0;
 float initMass = float(pow(10, 22));
 float sizeRatio = 30000.0f;
+const double WORLD_SCALE = 400000000.0;
+const double TIME_SCALE = 3600.0;
 
+float convert(float measure) {
+    return measure / WORLD_SCALE;
+}
 
 class Planet {
 private:
@@ -124,7 +129,7 @@ int main()
         moon.Draw(shaderProgram);
         earth.Draw(planetShader);
 
-        moon.Accelerate(-0.001f * dt, 0.0f);
+        moon.Accelerate(0.0f, 0.0f);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
