@@ -12,40 +12,42 @@ using namespace std;
 
 const double G = 6.6743e-11; // m^3 kg^-1 s^-2
 const float c = 299792458.0;
-float initMass = float(pow(10, 22));
-float sizeRatio = 30000.0f;
 const double WORLD_SCALE = 400000000.0;
-const double TIME_SCALE = 3600.0;
+const double TIME_SCALE = 360000.0;
 
-float convert(float measure) {
-    return measure / WORLD_SCALE;
-}
-
-class Planet {
+class Body {
 private:
     VAO vao;
     VBO* vbo;
     int vertexCount;
-
+    double renderX;
+    double renderY;
+    double renderRadius;
 public:
-    float radius;
+    double radius;
     int res = 100;
-    vector<float> velocity;
-    vector<float> position;
-    float mass;
+    double x, y;
+    double vx, vy;
+    double mass;
+    double ax, ay;
 
-    Planet(vector<float> position, float radius, vector<float> velocity, float mass) : radius(radius), velocity(velocity), position(position), mass(mass) {
+    Body(double x, double y, double radius, double vx, double vy, double mass) : x(x), y(y), radius(radius), vx(vx), vy(vy), mass(mass) {
+        renderX = x / WORLD_SCALE;
+        renderY = y / WORLD_SCALE;
+        renderRadius = radius / WORLD_SCALE;
+
         vector<float> vertices;
-        vertices.push_back(position[0]);
-        vertices.push_back(position[1]);
+        vertices.push_back(renderX);
+        vertices.push_back(renderY);
 
         for (int i = 0; i <= res; ++i) {
             float angle = 2.0f * 3.14159265358f * (static_cast<float>(i) / res);
-            float x = position[0] + cos(angle) * radius;
-            float y = position[1] + sin(angle) * radius;
-            vertices.push_back(x);
-            vertices.push_back(y);
+            double vertices_x = renderX + cos(angle) * renderRadius;
+            double vertices_y = renderY + sin(angle) * renderRadius;
+            vertices.push_back(vertices_x);
+            vertices.push_back(vertices_y);
         }
+
 
         vertexCount = vertices.size() / 2;
 
@@ -59,16 +61,20 @@ public:
     void Draw(Shader& shader) {
         shader.Activate();
 
-        vector<float> vertices;
-        vertices.push_back(position[0]);
-        vertices.push_back(position[1]);
+        renderX = x / WORLD_SCALE;
+        renderY = y / WORLD_SCALE;
+        renderRadius = radius / WORLD_SCALE;
 
-        for (int i = 0; i <= res; ++i) { // używamy pola res
+        vector<float> vertices;
+        vertices.push_back(renderX);
+        vertices.push_back(renderY);
+
+        for (int i = 0; i <= res; ++i) {
             float angle = 2.0f * 3.14159265358f * (static_cast<float>(i) / res);
-            float vx = position[0] + cos(angle) * radius; // używamy pola radius
-            float vy = position[1] + sin(angle) * radius;
-            vertices.push_back(vx);
-            vertices.push_back(vy);
+            double vertices_x = renderX + cos(angle) * renderRadius;
+            double vertices_y = renderY + sin(angle) * renderRadius;
+            vertices.push_back(vertices_x);
+            vertices.push_back(vertices_y);
         }
 
         vbo->Bind();
@@ -78,14 +84,32 @@ public:
         glDrawArrays(GL_TRIANGLE_FAN, 0, vertexCount);
     }
 
-    void Accelerate(float x, float y) {
-        velocity[0] += x;
-        velocity[1] += y;
+    void Update(double dt)
+    {
+        vx += ax * dt;
+        vy += ay * dt;
 
-        position[0] += velocity[0];
-        position[1] += velocity[1];
+        x += vx * dt;
+        y += vy * dt;
+
+        ax = 0;
+        ay = 0;
     }
+
 };
+
+void ApplyGravity(Body& a, Body& b, double dt) {
+    double dx = b.x - a.x;
+    double dy = b.y - a.y;
+
+    double r2 = dx*dx + dy*dy;
+    double r = sqrt(r2);
+
+    double factor = G * b.mass / (r*r*r);
+
+    a.ax += factor * dx;
+    a.ay += factor * dy;
+}
 
 int main()
 {
@@ -113,8 +137,8 @@ int main()
     Shader shaderProgram("Shaders/default.vert", "Shaders/default.frag");
     Shader planetShader("Shaders/default.vert", "Shaders/planet.frag");
 
-    Planet moon({-0.5f, 0.0f}, 0.1f, {0.0f, 0.0f}, 0.1f);
-    Planet earth({0.5f, 0.0f}, 0.1f, {0.0f, 0.0f}, 0.1f);
+    Body earth(0, 0, 18'371'000, 0, 0, 5.972e24);
+    Body moon(384400000.0, 0, 6'737'400, 0, 1022, 7.342e22);
 
     double lastTime = glfwGetTime();
 
@@ -122,15 +146,17 @@ int main()
     while (!glfwWindowShouldClose(window))
     {
         double currentTime = glfwGetTime();
-        double dt = currentTime - lastTime;
+        double dt = (currentTime - lastTime) * TIME_SCALE;
         lastTime = currentTime;
         glClear(GL_COLOR_BUFFER_BIT);
 
         moon.Draw(shaderProgram);
         earth.Draw(planetShader);
+        ApplyGravity(moon, earth, dt);
+        ApplyGravity(earth, moon, dt);
 
-        moon.Accelerate(0.0f, 0.0f);
-
+        moon.Update(dt);
+        earth.Update(dt);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
