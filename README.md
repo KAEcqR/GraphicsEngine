@@ -24,7 +24,7 @@ Each frame the program calculates the gravitational force between objects and up
 
 ## Screenshots
 
-![Simulation](screenshots/simulation.png)
+![Simulation](Screenshots/simulation.png)
 
 ## How to run
 
