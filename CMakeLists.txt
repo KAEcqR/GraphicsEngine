@@ -49,8 +49,10 @@ endforeach()
 add_executable(GraphicsEngine Source/main.cpp)
 
 # Linkowanie (po utworzeniu targetu!)
+find_package(OpenGL REQUIRED)
+
 target_link_libraries(GraphicsEngine
         glfw
         glad
-        opengl32
+        OpenGL::GL
 )
